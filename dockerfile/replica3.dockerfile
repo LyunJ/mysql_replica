@@ -1,0 +1,5 @@
+FROM mysql:8.0.31
+COPY ./configfile/mysql-replica3-config.cnf /etc/mysql/conf.d
+
+RUN chmod 777 /var/lib/mysql
+RUN chmod 777 /var/lib/mysql-files

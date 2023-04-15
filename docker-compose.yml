@@ -1,0 +1,128 @@
+version: "3.9"
+
+services:
+  mysql-source:
+    build:
+      context: ./
+      dockerfile: dockerfile/source.dockerfile
+    stdin_open: true
+    tty: true
+    ports:
+      - 13306:3306
+    networks:
+        application-replica-networks:
+          ipv4_address: 172.20.0.2
+    volumes:
+      - application-data:/var/lib/mysql
+      - application-data:/var/lib/mysql-files
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: application
+  
+  mysql-replica1:
+    build:
+      context: ./
+      dockerfile: dockerfile/replica1.dockerfile
+    stdin_open: true
+    tty: true
+    ports:
+      - 13307:3306
+    networks:
+      application-replica-networks:
+          ipv4_address: 172.20.0.3
+    volumes:
+      - application-replica1-data:/var/lib/mysql
+      - application-replica1-data:/var/lib/mysql-files
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: application
+    depends_on:
+      - mysql-source
+
+    
+  mysql-replica2:
+    build:
+      context: ./
+      dockerfile: dockerfile/replica2.dockerfile
+    stdin_open: true
+    tty: true
+    ports:
+      - 13308:3306
+    networks:
+      application-replica-networks:
+          ipv4_address: 172.20.0.4
+    volumes:
+      - application-replica2-data:/var/lib/mysql
+      - application-replica2-data:/var/lib/mysql-files
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: application
+    depends_on:
+      - mysql-source
+
+  mysql-replica3:
+    build:
+      context: ./
+      dockerfile: dockerfile/replica3.dockerfile
+    stdin_open: true
+    tty: true
+    ports:
+      - 13309:3306
+    networks:
+      application-replica-networks:
+          ipv4_address: 172.20.0.5
+    volumes:
+      - application-replica3-data:/var/lib/mysql
+      - application-replica3-data:/var/lib/mysql-files
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: application
+    depends_on:
+      - mysql-source
+  
+  datawarehouse:
+    image: postgres:latest
+    restart: always
+    ports:
+      - 5443:5443
+    volumes:
+      - datawarehouse-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: warehouse
+      POSTGRES_PASSWORD: warehouse
+      POSTGRES_DB: warehouse
+      PGDATA: /var/lib/postgresql/data
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+  datamart:
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: datamart
+    volumes:
+      - datamart-data:/var/lib/mysql
+      - datamart-data:/var/lib/mysql-files
+
+
+volumes:
+  application-data:
+  application-replica1-data:
+  application-replica2-data:
+  application-replica3-data:
+  datawarehouse-data:
+  datamart-data:
+
+
+networks:
+  application-replica-networks:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
