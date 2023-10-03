@@ -1,34 +1,36 @@
-#!/bin/zsh
+#!/bin/bash
 
 DOCKERPS=$(docker ps)
 
 echo "=======================DOCKER CONTAINER LIST========================"
-echo "$DOCKERPS \n"
+# echo "$DOCKERPS \n"
 
-DOCKERPS=$(echo $DOCKERPS | sed -r 's/[ ]+/ /g')
+# DOCKERPS=$(echo $DOCKERPS | sed -r 's/[ ]+/ /g')
 
 SELECTEDCONTAINERID=''
 LINECOUNTER=0
-declare -a CONTAINERIDCANDIDATES
-declare -a CONTAINERNAMES
-
-while read line; do
+CONTAINERIDCANDIDATES=()
+CONTAINERNAMES=()
+echo "$DOCKERPS"
+while read line;
+do
     if [ $LINECOUNTER -ge 1 ] 
     then
         CONTAINERID=$(echo $line | cut -d ' ' -f1)
         CONTAINERNAME=$(echo $line | cut -d ' ' -f2)
-        CONTAINERIDCANDIDATES+=($CONTAINERID)
-        CONTAINERNAMES+=($CONTAINERNAME)
+        CONTAINERIDCANDIDATES+=("$CONTAINERID")
+        CONTAINERNAMES+=("$CONTAINERNAME")
     fi
 
     ((LINECOUNTER++))
-done <<< $DOCKERPS
+done <<< "$DOCKERPS"
 
 echo "--------------------------------------------------------------------"
 echo "Please select container id for connect"
 echo "--------------------------------------------------------------------"
 PS3=":"
-select CONTAINERNAME in $CONTAINERNAMES
+echo "${CONTAINERNAMES[@]}"
+select CONTAINERNAME in "${CONTAINERNAMES[@]}"
 do
     echo "#### Selected container : $CONTAINERNAME ####\n"
     break
@@ -43,4 +45,4 @@ done
 
 echo "Connecting to \"$CONTAINERNAME : $SELECTEDCONTAINERID\" \n"
 
-docker exec -it $SELECTEDCONTAINERID /bin/bash
+docker exec -it $SELECTEDCONTAINERID //bin//bash
